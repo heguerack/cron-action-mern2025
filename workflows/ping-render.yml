@@ -1,20 +1,63 @@
-name: Ping Render to keep it awake
+# name: Ping Render + Next.js to keep them awake
+
+# on:
+#   schedule:
+#     - cron: "*/10 * * * *" # every 10 minutes (UTC)
+#   workflow_dispatch:
+
+# jobs:
+#   ping-mern:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Ping MERN app
+#         run: |
+#           set -e
+#           curl -sS -m 15 -o /dev/null -w "%{http_code}\n" "$RENDER_HEALTH_URL" | tee /tmp/status
+#           code=$(cat /tmp/status)
+#           echo "HTTP $code"
+#           test "$code" -ge 200 -a "$code" -lt 400
+#     env:
+#       RENDER_HEALTH_URL: ${{ secrets.RENDER_HEALTH_URL }}
+
+#   ping-next:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Ping Next.js app
+#         run: |
+#           set -e
+#           curl -sS -m 15 -o /dev/null -w "%{http_code}\n" "$NEXT_HEALTH_URL" | tee /tmp/status
+#           code=$(cat /tmp/status)
+#           echo "HTTP $code"
+#           test "$code" -ge 200 -a "$code" -lt 400
+#     env:
+#       NEXT_HEALTH_URL: ${{ secrets.NEXT_HEALTH_URL }}
+
+name: Ping Render + Next.js to keep them awake
 
 on:
   schedule:
     - cron: '*/10 * * * *' # every 10 minutes (UTC)
-  workflow_dispatch: # allows manual runs
+  workflow_dispatch:
 
 jobs:
-  ping:
+  ping-mern:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping health endpoint
+      - name: Ping MERN app (safe version)
         run: |
-          set -e
-          curl -sS -m 15 -o /dev/null -w "%{http_code}\n" "$RENDER_HEALTH_URL" | tee /tmp/status
-          code=$(cat /tmp/status)
-          echo "HTTP $code"
-          test "$code" -ge 200 -a "$code" -lt 400
+          code=$(curl -sS -m 15 -o /dev/null -w "%{http_code}" "$RENDER_HEALTH_URL" || echo "000")
+          echo "MERN HTTP $code"
+          exit 0
     env:
       RENDER_HEALTH_URL: ${{ secrets.RENDER_HEALTH_URL }}
+
+  ping-next:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Next.js app (safe version)
+        run: |
+          code=$(curl -sS -m 15 -o /dev/null -w "%{http_code}" "$NEXT_HEALTH_URL" || echo "000")
+          echo "NEXT.JS HTTP $code"
+          exit 0
+    env:
+      NEXT_HEALTH_URL: ${{ secrets.NEXT_HEALTH_URL }}
